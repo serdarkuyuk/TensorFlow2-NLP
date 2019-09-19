@@ -58,13 +58,13 @@ for x in range(training_size):
 
 
 tokenizer = Tokenizer()
-tokenizer.fit_on_texts(sentences) 
+tokenizer.fit_on_texts(sentences)      #gives numbers to words
 
 word_index = tokenizer.word_index         #[i:1,a:2,....]
 vocab_size=len(word_index)    
 
-sequences = tokenizer.texts_to_sequences(sentences)
-padded = pad_sequences(sequences, maxlen=max_length, padding=padding_type, truncating=trunc_type)
+sequences = tokenizer.texts_to_sequences(sentences)   # creates sequences of sentences
+padded = pad_sequences(sequences, maxlen=max_length, padding=padding_type, truncating=trunc_type)   #add zeros by padding
 
 split = int(test_portion * training_size)
 
@@ -82,25 +82,26 @@ print(word_index['i'])
     https://storage.googleapis.com/laurencemoroney-blog.appspot.com/glove.6B.100d.txt \
     -O /tmp/glove.6B.100d.txt
 embeddings_index = {};
-with open('/tmp/glove.6B.100d.txt') as f:
+with open('/tmp/glove.6B.100d.txt') as f:   #word number1 number2.... 100
     for line in f:
-        values = line.split();
+        values = line.split();          #words saperated
         word = values[0];
-        coefs = np.asarray(values[1:], dtype='float32');
-        embeddings_index[word] = coefs;
+        coefs = np.asarray(values[1:], dtype='float32');    
+        embeddings_index[word] = coefs;     #dict {"word":100 vector, ....}
 
 embeddings_matrix = np.zeros((vocab_size+1, embedding_dim));
 for word, i in word_index.items():
     embedding_vector = embeddings_index.get(word);
     if embedding_vector is not None:
-        embeddings_matrix[i] = embedding_vector;
+        embeddings_matrix[i] = embedding_vector;    #create vector for each word in  word_index(words in training tweets)
         
 print(len(embeddings_matrix))
 
 model = tf.keras.Sequential([
     tf.keras.layers.Embedding(vocab_size+1, embedding_dim, input_length=max_length, weights=[embeddings_matrix], trainable=False),
+                                #allwords        100                 16 tweets length           matrix of vectors
     tf.keras.layers.Dropout(0.2),
-    tf.keras.layers.Conv1D(64, 5, activation='relu'),
+    tf.keras.layers.Conv1D(64, 5, activation='relu'),       #64 filter with 5 length
     tf.keras.layers.MaxPooling1D(pool_size=4),
     tf.keras.layers.LSTM(64),
     tf.keras.layers.Dense(1, activation='sigmoid')
